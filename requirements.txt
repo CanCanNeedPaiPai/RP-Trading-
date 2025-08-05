@@ -1,4 +1,4 @@
-py-cord==2.5.2
+discord.py==2.3.2
 feedparser==6.0.11
 beautifulsoup4==4.12.3
 requests==2.31.0
