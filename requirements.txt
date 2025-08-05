@@ -1,5 +1,13 @@
-discord.py==2.3.2
+# Discord 文字功能（无 audioop 依赖）
+py-cord==2.5.0
+
+# 新闻解析
 feedparser==6.0.11
 requests==2.31.0
 beautifulsoup4==4.12.3
+
+# 翻译
 deep-translator==1.11.4
+
+# 运行需要
+aiohttp==3.9.5
