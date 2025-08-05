@@ -3,7 +3,7 @@ import time
 import requests
 import feedparser
 from bs4 import BeautifulSoup
-from deep_translator import GoogleTranslator
+from googletrans import Translator
 import discord
 from discord.ext import tasks
 
@@ -11,18 +11,12 @@ from discord.ext import tasks
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 
+# 配置 Intents，并禁用语音
 intents = discord.Intents.default()
-client = discord.Client(intents=intents)
+client = discord.Client(intents=intents, voice_client_cls=None)  # 禁用语音功能
+translator = Translator()
 
-# 翻译函数（deep-translator）
-def translate_to_chinese(text):
-    try:
-        return GoogleTranslator(source="auto", target="zh-CN").translate(text)
-    except Exception as e:
-        print(f"翻译失败: {e}")
-        return text  # 出错时返回原文
-
-# 新闻源
+# 新闻源（RSS 优先，网页备用）
 RSS_FEEDS = [
     "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",   # WSJ Markets
     "https://www.coindesk.com/arc/outboundfeeds/rss/", # CoinDesk
@@ -93,7 +87,7 @@ async def fetch_and_post():
             latest_titles.add(title)
 
             # 翻译中文
-            translation = translate_to_chinese(title)
+            translation = translator.translate(title, src="en", dest="zh-cn").text
 
             embed = discord.Embed(
                 title=title,
