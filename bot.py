@@ -12,11 +12,9 @@ DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
-
-# 翻译器
 translator = GoogleTranslator(source="en", target="zh-CN")
 
-# 新闻源（RSS 优先，网页兜底）
+# 你的新闻源（RSS 优先，网页备用）
 RSS_FEEDS = [
     "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",   # WSJ Markets
     "https://www.coindesk.com/arc/outboundfeeds/rss/", # CoinDesk
@@ -37,6 +35,7 @@ def fetch_from_rss():
             for entry in feed.entries[:3]:
                 title = entry.title
                 link = entry.link
+                # 获取封面图（如果 RSS 有）
                 image = None
                 if "media_content" in entry and len(entry.media_content) > 0:
                     image = entry.media_content[0]["url"]
@@ -55,11 +54,13 @@ def fetch_from_web():
         try:
             resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
             soup = BeautifulSoup(resp.text, "html.parser")
+            # 抓前3个标题
             for h in soup.find_all(["h2", "h3"])[:3]:
                 title = h.get_text(strip=True)
                 link = h.find("a")["href"] if h.find("a") else url
                 if not link.startswith("http"):
                     link = url + link
+                # 找图片
                 img = soup.find("img")
                 image = img["src"] if img else None
                 articles.append((title, link, image))
@@ -86,8 +87,8 @@ async def fetch_and_post():
             # 翻译中文
             try:
                 translation = translator.translate(title)
-            except Exception as e:
-                translation = f"翻译失败: {e}"
+            except Exception:
+                translation = "翻译失败"
 
             embed = discord.Embed(
                 title=title,
