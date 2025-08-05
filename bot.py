@@ -1,9 +1,8 @@
 import os
-import time
 import requests
 import feedparser
 from bs4 import BeautifulSoup
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import discord
 from discord.ext import tasks
 
@@ -11,10 +10,9 @@ from discord.ext import tasks
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 
-# 配置 Intents，并禁用语音
 intents = discord.Intents.default()
-client = discord.Client(intents=intents, voice_client_cls=None)  # 禁用语音功能
-translator = Translator()
+client = discord.Client(intents=intents)
+translator = GoogleTranslator(source="en", target="zh-cn")
 
 # 新闻源（RSS 优先，网页备用）
 RSS_FEEDS = [
@@ -37,7 +35,6 @@ def fetch_from_rss():
             for entry in feed.entries[:3]:
                 title = entry.title
                 link = entry.link
-                # 获取封面图（如果 RSS 有）
                 image = None
                 if "media_content" in entry and len(entry.media_content) > 0:
                     image = entry.media_content[0]["url"]
@@ -56,13 +53,11 @@ def fetch_from_web():
         try:
             resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
             soup = BeautifulSoup(resp.text, "html.parser")
-            # 抓前3个标题
             for h in soup.find_all(["h2", "h3"])[:3]:
                 title = h.get_text(strip=True)
                 link = h.find("a")["href"] if h.find("a") else url
                 if not link.startswith("http"):
                     link = url + link
-                # 找图片
                 img = soup.find("img")
                 image = img["src"] if img else None
                 articles.append((title, link, image))
@@ -75,7 +70,7 @@ async def fetch_and_post():
     global latest_titles
     channel = client.get_channel(DISCORD_CHANNEL_ID)
 
-    # 先尝试 RSS
+    # 优先 RSS
     articles = fetch_from_rss()
 
     # 如果 RSS 没抓到，再用网页
@@ -87,7 +82,11 @@ async def fetch_and_post():
             latest_titles.add(title)
 
             # 翻译中文
-            translation = translator.translate(title, src="en", dest="zh-cn").text
+            try:
+                translation = translator.translate(title)
+            except Exception as e:
+                translation = "翻译失败"
+                print(f"翻译错误: {e}")
 
             embed = discord.Embed(
                 title=title,

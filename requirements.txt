@@ -2,4 +2,4 @@ discord.py==2.3.2
 feedparser==6.0.11
 requests==2.31.0
 beautifulsoup4==4.12.3
-googletrans==4.0.0-rc1
+deep-translator==1.11.4
