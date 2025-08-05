@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import feedparser
 from bs4 import BeautifulSoup
@@ -8,15 +9,13 @@ from discord.ext import tasks
 
 # 读取环境变量
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
+DISCORD_CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
-
-# 翻译器
 translator = GoogleTranslator(source="en", target="zh-CN")
 
-# 新闻源
+# 新闻源（RSS 优先，网页兜底）
 RSS_FEEDS = [
     "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",   # WSJ Markets
     "https://www.coindesk.com/arc/outboundfeeds/rss/", # CoinDesk
@@ -29,7 +28,6 @@ WEB_FALLBACKS = [
 latest_titles = set()
 
 def fetch_from_rss():
-    """优先从 RSS 获取新闻"""
     articles = []
     for url in RSS_FEEDS:
         try:
@@ -48,7 +46,6 @@ def fetch_from_rss():
     return articles
 
 def fetch_from_web():
-    """兜底网页抓取"""
     articles = []
     for url in WEB_FALLBACKS:
         try:
@@ -79,6 +76,7 @@ async def fetch_and_post():
         if title not in latest_titles:
             latest_titles.add(title)
             translation = translator.translate(title)
+
             embed = discord.Embed(
                 title=title,
                 url=link,
