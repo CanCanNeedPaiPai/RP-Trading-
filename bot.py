@@ -12,9 +12,11 @@ DISCORD_CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
-translator = GoogleTranslator(source="en", target="zh-cn")
 
-# 新闻源（RSS 优先，网页备用）
+# 翻译器
+translator = GoogleTranslator(source="en", target="zh-CN")
+
+# 新闻源（RSS 优先，网页兜底）
 RSS_FEEDS = [
     "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",   # WSJ Markets
     "https://www.coindesk.com/arc/outboundfeeds/rss/", # CoinDesk
@@ -36,9 +38,9 @@ def fetch_from_rss():
                 title = entry.title
                 link = entry.link
                 image = None
-                if "media_content" in entry and len(entry.media_content) > 0:
+                if hasattr(entry, "media_content"):
                     image = entry.media_content[0]["url"]
-                elif "media_thumbnail" in entry and len(entry.media_thumbnail) > 0:
+                elif hasattr(entry, "media_thumbnail"):
                     image = entry.media_thumbnail[0]["url"]
 
                 articles.append((title, link, image))
@@ -70,7 +72,7 @@ async def fetch_and_post():
     global latest_titles
     channel = client.get_channel(DISCORD_CHANNEL_ID)
 
-    # 优先 RSS
+    # 先尝试 RSS
     articles = fetch_from_rss()
 
     # 如果 RSS 没抓到，再用网页
@@ -84,9 +86,8 @@ async def fetch_and_post():
             # 翻译中文
             try:
                 translation = translator.translate(title)
-            except Exception as e:
+            except Exception:
                 translation = "翻译失败"
-                print(f"翻译错误: {e}")
 
             embed = discord.Embed(
                 title=title,
