@@ -1,5 +1,5 @@
-discord.py==2.5.2
+discord.py==2.3.2
 feedparser==6.0.11
-beautifulsoup4==4.12.3
 requests==2.31.0
-python-dotenv==1.0.1
+beautifulsoup4==4.12.3
+googletrans==4.0.0-rc1
