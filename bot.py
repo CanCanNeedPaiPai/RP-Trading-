@@ -1,5 +1,4 @@
 import os
-import time
 import requests
 import feedparser
 from bs4 import BeautifulSoup
@@ -11,6 +10,7 @@ from discord.ext import tasks
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 DISCORD_CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
+# 初始化 Discord client（只保留消息 intents）
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 translator = GoogleTranslator(source="en", target="zh-CN")
@@ -28,6 +28,7 @@ WEB_FALLBACKS = [
 latest_titles = set()
 
 def fetch_from_rss():
+    """优先从 RSS 获取新闻"""
     articles = []
     for url in RSS_FEEDS:
         try:
@@ -46,6 +47,7 @@ def fetch_from_rss():
     return articles
 
 def fetch_from_web():
+    """兜底从网页抓取新闻"""
     articles = []
     for url in WEB_FALLBACKS:
         try:
